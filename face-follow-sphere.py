@@ -170,6 +170,9 @@ pitch = arm.position[4]
 starting_pitch = pitch
 yaw = arm.position[5]
 
+radius = x
+startrotation = math.atan(y/x) # opposite/adjacent
+startelevation = math.atan(z/x) # opposite/adjacent
 rotation = math.atan(y/x) # opposite/adjacent
 elevation = math.atan(z/x) # opposite/adjacent
 
@@ -211,43 +214,46 @@ while True:
         if (facecount > 0) and (maxSize > closeSizeCutoff):
             # print(x, maxSize, closeSizeCutoff)
             # calculate distance of first face from center of image
-            (x, y, w, h) = maxLoc
-            offsetX = (0.5*capWidth-(x+w*0.5))/capWidth
-            offsetY = (0.5*capHeight-(y+h*0.5))/capHeight
+            (facex, facey, facew, faceh) = maxLoc
+            offsetX = (0.5*capWidth-(facex+facew*0.5))/capWidth
+            offsetY = (0.5*capHeight-(facey+faceh*0.5))/capHeight
             
-            scale = 3.0
-            dTilt = -1.0*scale*offsetY
-            dPan = scale*offsetX
-            dX = 0.5 * offsetX
-            dY = 0.5 * offsetY
-            
-            # new position
-            x = arm.position[0]
-            y = arm.position[1]
-            z = arm.position[2
-            roll = arm.position[3]
-            pitch = arm.position[4]
-            yaw = arm.position[5]
+            scale = 0.1
+            dTilt = scale*offsetY
+            dPan = 0.5625*scale*offsetX
+            mmScale = 100
 
-            newx = x
-            newy = y + dY
-            newz = z + dZ
-            newpitch = pitch + dTilt
-            newyaw = yaw + dPan
+            # dY = mmScale * offsetX
+            # dZ = mmScale * offsetY
+            
+            # rotation = startrotation + dPan
+            # elevation = startelevation + dTilt
+            rotation = rotation + dPan
+            elevation = elevation + dTilt
+            print("----> ", dTilt, dPan, rotation, elevation)
+
+            # new position
+            newx = radius*math.cos(rotation)
+            newy = radius*math.sin(rotation)
+            newz = radius*math.sin(elevation)+z_offset
+            newpitch = (starting_pitch+math.degrees(elevation))
+            # newyaw = yaw + dPan
             # yaw = ((180+math.degrees(rotation))%180)-180
             # print(newx, newy, newz, roll, pitch, yaw)
 
-            arm.set_position(newx, newy, newz, roll, newpitch, newyaw, speed=200, mvacc=2000, wait=False, radius=0)#, speed=500, relative=False, wait=False)
+            
 
 
             # add front back moves
             #print(dTilt, dPan)
             #print('* position:', arm.position)
-            cv2.rectangle(img, (x, y), (x+w, y+h), (255, 255, 0), 10)
+            cv2.rectangle(img, (facex, facey), (facex+facew, facey+faceh), (255, 255, 0), 10)
 
             if time.time() - tLastUpdated > updateInterval:
                 # arm.set_position(pitch=dTilt, roll=dPan, relative=True, speed=500, mvacc=2000, wait=False)
-                ret = arm.set_position_aa(axis_angle_pose=[0, 0, 0, 0, dTilt, dPan], speed=500, relative=True, wait=False)
+                #ret = arm.set_position_aa(axis_angle_pose=[0, 0, 0, 0, dTilt, dPan], speed=500, relative=True, wait=False)
+                ret = arm.set_position(newx, newy, newz, roll, newpitch, yaw, speed=500, wait=False, radius=0)#, speed=500, relative=False, wait=False)
+                # ret = arm.set_position(newx, newy, newz, roll, newpitch, yaw, speed=500, wait=True, radius=0)#, speed=500, relative=False, wait=False)
                 tLastUpdated = time.time()
 
             # rotate joint J1

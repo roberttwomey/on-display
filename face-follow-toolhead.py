@@ -22,7 +22,7 @@ import cv2
 
 
 # ==== Configuration ====
-CAMERA_NUM = 2
+CAMERA_NUM = 1
 
 FACE = 0
 PAPER = 1

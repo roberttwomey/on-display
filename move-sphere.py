@@ -115,6 +115,8 @@ print('* position:', arm.position)
 
 z_offset = 400.0
 
+starting_position = arm.position
+
 x = arm.position[0]
 y = arm.position[1]
 z = arm.position[2] - z_offset
@@ -149,65 +151,141 @@ print(newx, newy, newz)
 #     print(newx, newy, newz, roll, pitch, yaw)
 #     arm.set_position(newx, newy, newz, roll, pitch, yaw, radius=0, speed=200, mvacc=2000, wait=False)#, speed=500, relative=False, wait=False)
 
+# # pan in y plane
 # for i in range(5):
-#     elevation += math.radians(-10)
+#     elevation += math.radians(10)
 
 #     newx = radius*math.cos(rotation)
 #     newy = radius*math.sin(rotation)
 #     newz = radius*math.sin(elevation)+z_offset
 #     newx *= math.cos(elevation)
-#     pitch = (starting_pitch+math.degrees(elevation))
+#     
 
 #     print(newx, newy, newz, roll, pitch, yaw)
 #     arm.set_position(newx, newy, newz, roll, pitch, yaw, radius=0, speed=200, mvacc=2000, wait=False)#, speed=500, relative=False, wait=False)
 
+# radius *= 0.5 # minimum
+# radius *= 1.5
 
-# pan in x plane
+# # pan in y plane
+# for j in range(4):
+#     # location of toolhead
+#     elevation += math.radians(10)
+    
+#     # pitch of toolhead
+#     pitch = (starting_pitch+math.degrees(elevation))
 
-for i in range(5):
-    rotation += math.radians(10)
+#     # pan in x plane
+#     for i in range(5):
+#         rotation += math.radians(10)
 
-    newx = radius*math.cos(rotation)
-    newy = radius*math.sin(rotation)
-    newz = radius*math.sin(elevation)+z_offset
-    yaw = ((180+math.degrees(rotation))%180)-180
-    print(newx, newy, newz, roll, pitch, yaw)
+#         newx = radius*math.cos(rotation)
+#         newy = radius*math.sin(rotation)
+#         newz = radius*math.sin(elevation)+z_offset
+#         yaw = ((180+math.degrees(rotation))%180)-180
+#         print(newx, newy, newz, roll, pitch, yaw)
 
-    arm.set_position(newx, newy, newz, roll, pitch, yaw, speed=200, mvacc=2000, wait=False, radius=0)#, speed=500, relative=False, wait=False)
+#         arm.set_position(newx, newy, newz, roll, pitch, yaw, speed=200, mvacc=2000, wait=False, radius=0)#, speed=500, relative=False, wait=False)
 
 
-for i in range(10):
-    rotation += math.radians(-10)
+#     for i in range(10):
+#         rotation += math.radians(-10)
 
-    newx = radius*math.cos(rotation)
-    newy = radius*math.sin(rotation)
-    newz = radius*math.sin(elevation)+z_offset
-    yaw = (180+math.degrees(rotation))
-    if yaw < -180:
-        yaw += 360
-    if yaw > 180: 
-        yaw -=360
+#         newx = radius*math.cos(rotation)
+#         newy = radius*math.sin(rotation)
+#         newz = radius*math.sin(elevation)+z_offset
+#         yaw = (180+math.degrees(rotation))
+#         if yaw < -180:
+#             yaw += 360
+#         if yaw > 180: 
+#             yaw -=360
 
-    print(newx, newy, newz, roll, pitch, yaw)
+#         print(newx, newy, newz, roll, pitch, yaw)
 
-    arm.set_position(newx, newy, newz, roll, pitch, yaw, speed=200, mvacc=2000, wait=False, radius=0)#, speed=500, relative=False, wait=False)
+#         arm.set_position(newx, newy, newz, roll, pitch, yaw, speed=200, mvacc=2000, wait=False, radius=0)#, speed=500, relative=False, wait=False)
 
-for i in range(5):
-    rotation += math.radians(10)
+#     for i in range(5):
+#         rotation += math.radians(10)
 
-    newx = radius*math.cos(rotation)
-    newy = radius*math.sin(rotation)
-    newz = radius*math.sin(elevation)+z_offset
-    yaw = (180+math.degrees(rotation))
-    if yaw < -180:
-        yaw += 360
-    if yaw > 180: 
-        yaw -=360
+#         newx = radius*math.cos(rotation)
+#         newy = radius*math.sin(rotation)
+#         newz = radius*math.sin(elevation)+z_offset
+#         yaw = (180+math.degrees(rotation))
+#         if yaw < -180:
+#             yaw += 360
+#         if yaw > 180: 
+#             yaw -=360
 
-    print(newx, newy, newz, roll, pitch, yaw)
+#         print(newx, newy, newz, roll, pitch, yaw)
 
-    arm.set_position(newx, newy, newz, roll, pitch, yaw, speed=200, mvacc=2000, wait=False, radius=0)#, speed=500, relative=False, wait=False)
+#         arm.set_position(newx, newy, newz, roll, pitch, yaw, speed=200, mvacc=2000, wait=False, radius=0)#, speed=500, relative=False, wait=False)
 
+
+# arm.set_position(*starting_position, speed=200, mvacc=2000, wait=False, radius=0)
+
+
+
+
+## FASTER PAN
+
+# radius *= 0.5 # min
+# radius *= 1.5 # max though locks on overhead
+
+# pan in y plane
+for j in range(3):
+    # location of toolhead
+    elevation += math.radians(20)
+    
+    # pitch of toolhead
+    pitch = (starting_pitch+math.degrees(elevation))
+
+    # pan in x plane
+    for i in range(2):
+        rotation += math.radians(20)
+
+        newx = radius*math.cos(rotation)
+        newy = radius*math.sin(rotation)
+        newz = radius*math.sin(elevation)+z_offset
+        yaw = ((180+math.degrees(rotation))%180)-180
+        print(newx, newy, newz, roll, pitch, yaw)
+
+        arm.set_position(newx, newy, newz, roll, pitch, yaw, speed=200, mvacc=2000, wait=False, radius=0)#, speed=500, relative=False, wait=False)
+
+
+    for i in range(4):
+        rotation += math.radians(-20)
+
+        newx = radius*math.cos(rotation)
+        newy = radius*math.sin(rotation)
+        newz = radius*math.sin(elevation)+z_offset
+        yaw = (180+math.degrees(rotation))
+        if yaw < -180:
+            yaw += 360
+        if yaw > 180: 
+            yaw -=360
+
+        print(newx, newy, newz, roll, pitch, yaw)
+
+        arm.set_position(newx, newy, newz, roll, pitch, yaw, speed=200, mvacc=2000, wait=False, radius=0)#, speed=500, relative=False, wait=False)
+
+    for i in range(2):
+        rotation += math.radians(20)
+
+        newx = radius*math.cos(rotation)
+        newy = radius*math.sin(rotation)
+        newz = radius*math.sin(elevation)+z_offset
+        yaw = (180+math.degrees(rotation))
+        if yaw < -180:
+            yaw += 360
+        if yaw > 180: 
+            yaw -=360
+
+        print(newx, newy, newz, roll, pitch, yaw)
+
+        arm.set_position(newx, newy, newz, roll, pitch, yaw, speed=200, mvacc=2000, wait=False, radius=0)#, speed=500, relative=False, wait=False)
+
+
+arm.set_position(*starting_position, speed=200, mvacc=2000, wait=False, radius=0)
 
 # for i in range(5):
 #     rotation += math.radians(10)

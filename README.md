@@ -35,6 +35,7 @@ cd ~/dev_ws
 source install/setup.bash
 ros2 launch xarm_planner test_xarm_planner_api_joint.launch.py dof:=7 robot_type:=xarm
 ```
+from xarm planner example: https://github.com/xArm-Developer/xarm_ros2/tree/galactic#57-xarm_planner
 
 ### More about Moveit
 - https://moveit.ros.org/documentation/applications/

@@ -49,6 +49,7 @@ movements (joint or pose-based):
 ros2 launch xarm_planner test_xarm_planner_client_joint.launch.py dof:=7
 ros2 launch xarm_planner test_xarm_planner_client_pose.launch.py dof:=7
 ```
+from: https://github.com/xArm-Developer/xarm_ros2/tree/galactic#57-xarm_planner
 
 ### More about Moveit
 - https://moveit.ros.org/documentation/applications/

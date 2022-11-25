@@ -49,3 +49,6 @@ opencv camera in put in ROS2 galactic https://automaticaddison.com/getting-start
 ROS noetic / pybullet https://github.com/ros-pybullet/ros_pybullet_interface
 
 ## Reference
+
+- Relaxed-IK Unity: https://github.com/uwgraphics/relaxed_ik_unity
+- 

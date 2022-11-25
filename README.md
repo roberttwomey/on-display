@@ -37,6 +37,19 @@ ros2 launch xarm_planner test_xarm_planner_api_joint.launch.py dof:=7 robot_type
 ```
 from xarm planner example: https://github.com/xArm-Developer/xarm_ros2/tree/galactic#57-xarm_planner
 
+### Rviz and control with ROS
+
+launch rviz simualtion:
+```
+ros2 launch xarm_planner xarm7_planner_fake.launch.py
+```
+
+movements (joint or pose-based):
+```
+ros2 launch xarm_planner test_xarm_planner_client_joint.launch.py dof:=7
+ros2 launch xarm_planner test_xarm_planner_client_pose.launch.py dof:=7
+```
+
 ### More about Moveit
 - https://moveit.ros.org/documentation/applications/
 - https://github.com/o2as/ur-o2as/ robot arms with sticks and string, playing with a diabolo. Uses MoveIt and bio_ik. Includes a Gazebo simulation plugin and Rviz visualization.

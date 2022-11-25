@@ -65,4 +65,5 @@ ROS noetic / pybullet https://github.com/ros-pybullet/ros_pybullet_interface
 ## Reference
 
 - Relaxed-IK Unity: https://github.com/uwgraphics/relaxed_ik_unity
-- 
+- xArm7-CPP_SDK: builds fine on mac M!. run examples from `/Users/rtwomey/code/xArm-CPLUS-SDK/`. 
+  - shared libraries is in `/Users/rtwomey/code/xArm-CPLUS-SDK/build/lib/libxarm.so`

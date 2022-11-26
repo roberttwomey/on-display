@@ -95,7 +95,10 @@ ROS noetic / pybullet https://github.com/ros-pybullet/ros_pybullet_interface
 - results in [xarm7_ikfast_results.zip](https://github.com/roberttwomey/on-display-code/files/10097122/xarm7_ikfast_results.zip) linked below. 
 - to compile into an executable: `make ikfast`
 
-
+**Testing**
+- `python3 -c "import pyikfast; print(pyikfast.forward([0.927295218001612, -2.899331265288886, 2.048719302774242, -1.057447868999410, 1.163951188044116, 0.612010251709654]))"`
+- `python3 -c "import pyikfast; print(pyikfast.forward([0, 0, 0, 0, 0, 0, 0]))"`
+- `python3 -c "import pyikfast; print(pyikfast.inverse([0.5, 0.5, 0.5], [1, 0, 0, 0, 1, 0, 0, 0, 1]))"`
 
 #### CompasFab
 - PyBullet inverse kinematics: https://gramaziokohler.github.io/compas_fab/latest/examples/05_backends_pybullet/02_forward_and_inverse_kinematics.html

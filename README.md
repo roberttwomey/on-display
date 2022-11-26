@@ -76,8 +76,10 @@ ROS noetic / pybullet https://github.com/ros-pybullet/ros_pybullet_interface
 - http://wiki.ros.org/Industrial/Tutorials/Create_a_Fast_IK_Solution
   - Installing OpenRave on 20.04 https://robots.uc3m.es/installation-guides/install-openrave.html#install-openrave-via-scripts-ubuntu-1804-bionic-and-ubuntu-2004-focal
   - **No Need to install from scratch**: https://ros-planning.github.io/moveit_tutorials/doc/ikfast/ikfast_tutorial.html#getting-started
-  - in one step
-    - `rosrun moveit_kinematics auto_create_ikfast_moveit_plugin.sh --iktype Transform6D /tmp/xarm7.urdf <planning_group_name> link_base link_eef`
+  - in one step (assuming an ros noetic install on an x64 machine)
+    - `rosrun moveit_kinematics auto_create_ikfast_moveit_plugin.sh --iktype Transform6D /tmp/xarm7.urdf ikfast_plan link_base link_eef`
+
+
     - `rosrun moveit_kinematics auto_create_ikfast_moveit_plugin.sh --iktype Transform6D /tmp/$MYROBOT.urdf <planning_group_name> <base_link> <eef_link>`
 
 [xarm7.urdf.zip](https://github.com/roberttwomey/on-display-code/files/10096583/xarm7.urdf.zip)

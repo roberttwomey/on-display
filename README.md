@@ -78,13 +78,21 @@ ROS noetic / pybullet https://github.com/ros-pybullet/ros_pybullet_interface
   - **No Need to install from scratch**: https://ros-planning.github.io/moveit_tutorials/doc/ikfast/ikfast_tutorial.html#getting-started
   - in one step (assuming an ros noetic install on an x64 machine)
     - `rosrun moveit_kinematics auto_create_ikfast_moveit_plugin.sh --iktype Transform6D /tmp/xarm7.urdf ikfast_plan link_base link_eef`
-
-
     - `rosrun moveit_kinematics auto_create_ikfast_moveit_plugin.sh --iktype Transform6D /tmp/$MYROBOT.urdf <planning_group_name> <base_link> <eef_link>`
 
 - python bindings for IKFast: https://pypi.org/project/ikfast-pybind/
 - from this project: https://github.com/compas-dev/compas_fab
 - and this project: https://github.com/yijiangh/choreo
+
+#### All-in-one pyikfast with docker: 
+https://hub.docker.com/r/cyberbotics/pyikfast
+- get the docker image: `docker pull cyberbotics/pyikfast`
+- download xarm7.urdf as robot.urdf
+- change to that directory
+- generate the files: `docker run -v ${PWD}:/output cyberbotics/pyikfast link_base link_eef`
+
+
+
 
 #### CompasFab
 - PyBullet inverse kinematics: https://gramaziokohler.github.io/compas_fab/latest/examples/05_backends_pybullet/02_forward_and_inverse_kinematics.html

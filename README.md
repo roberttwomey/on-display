@@ -90,7 +90,8 @@ https://hub.docker.com/r/cyberbotics/pyikfast
 - download xarm7.urdf as robot.urdf
 - change to that directory
 - generate the files: `docker run -v ${PWD}:/output cyberbotics/pyikfast link_base link_eef`
-
+- results in [xarm7_ikfast_results.zip](https://github.com/roberttwomey/on-display-code/files/10097122/xarm7_ikfast_results.zip) linked below. 
+- to compile into an executable: `make ikfast`
 
 
 

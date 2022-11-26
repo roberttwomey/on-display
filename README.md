@@ -82,4 +82,12 @@ ROS noetic / pybullet https://github.com/ros-pybullet/ros_pybullet_interface
 
     - `rosrun moveit_kinematics auto_create_ikfast_moveit_plugin.sh --iktype Transform6D /tmp/$MYROBOT.urdf <planning_group_name> <base_link> <eef_link>`
 
-[xarm7.urdf.zip](https://github.com/roberttwomey/on-display-code/files/10096583/xarm7.urdf.zip)
+- python bindings for IKFast: https://pypi.org/project/ikfast-pybind/
+- from this project: https://github.com/compas-dev/compas_fab
+- and this project: https://github.com/yijiangh/choreo
+
+#### CompasFab
+- PyBullet inverse kinematics: https://gramaziokohler.github.io/compas_fab/latest/examples/05_backends_pybullet/02_forward_and_inverse_kinematics.html
+- 
+# Files:
+- [xarm7.urdf.zip](https://github.com/roberttwomey/on-display-code/files/10096583/xarm7.urdf.zip)

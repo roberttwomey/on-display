@@ -85,8 +85,9 @@ ROS noetic / pybullet https://github.com/ros-pybullet/ros_pybullet_interface
 - and this project: https://github.com/yijiangh/choreo
 
 #### All-in-one pyikfast with docker: 
-https://hub.docker.com/r/cyberbotics/pyikfast
+- https://github.com/cyberbotics/pyikfast
 - get the docker image: `docker pull cyberbotics/pyikfast`
+  - https://hub.docker.com/r/cyberbotics/pyikfast
 - download xarm7.urdf as robot.urdf
 - change to that directory
 - generate the files: `docker run -v ${PWD}:/output cyberbotics/pyikfast link_base link_eef`

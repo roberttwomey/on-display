@@ -99,6 +99,8 @@ ROS noetic / pybullet https://github.com/ros-pybullet/ros_pybullet_interface
 - `python3 -c "import pyikfast; print(pyikfast.forward([0.927295218001612, -2.899331265288886, 2.048719302774242, -1.057447868999410, 1.163951188044116, 0.612010251709654]))"`
 - `python3 -c "import pyikfast; print(pyikfast.forward([0, 0, 0, 0, 0, 0, 0]))"`
 - `python3 -c "import pyikfast; print(pyikfast.inverse([0.5, 0.5, 0.5], [1, 0, 0, 0, 1, 0, 0, 0, 1]))"`
+- forward kinematics for joint angles (same as look-forward-tool.py): `python3 -c "import pyikfast; print(pyikfast.forward([0, -0.7853981634, 0, 0, 0, -0.7853981634, 0, 0]))"`
+  - results in `[[0.2239256672224522, 0.0, 0.3999220958863359], [-5.1032511549919946e-12, 0.0, 1.0, 0.0, -1.0, 0.0, 1.0, 0.0, 5.1032511549919946e-12]]`
 
 #### CompasFab
 - PyBullet inverse kinematics: https://gramaziokohler.github.io/compas_fab/latest/examples/05_backends_pybullet/02_forward_and_inverse_kinematics.html

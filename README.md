@@ -75,5 +75,6 @@ ROS noetic / pybullet https://github.com/ros-pybullet/ros_pybullet_interface
 - https://www.oreilly.com/library/view/mastering-ros-for/9781783551798/ch11s12.html
 - http://wiki.ros.org/Industrial/Tutorials/Create_a_Fast_IK_Solution
   - Installing OpenRave on 20.04 https://robots.uc3m.es/installation-guides/install-openrave.html#install-openrave-via-scripts-ubuntu-1804-bionic-and-ubuntu-2004-focal
-  - 
+  - **No Need to install from scratch**: https://ros-planning.github.io/moveit_tutorials/doc/ikfast/ikfast_tutorial.html#getting-started
 
+[xarm7.urdf.zip](https://github.com/roberttwomey/on-display-code/files/10096583/xarm7.urdf.zip)

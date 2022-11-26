@@ -91,6 +91,7 @@ ROS noetic / pybullet https://github.com/ros-pybullet/ros_pybullet_interface
 - download xarm7.urdf as robot.urdf
 - change to that directory
 - generate the files: `docker run -v ${PWD}:/output cyberbotics/pyikfast link_base link_eef`
+  - generate with extension: `docker run -v ${PWD}:/output cyberbotics/pyikfast link_base link_eef xarm7`
 - results in [xarm7_ikfast_results.zip](https://github.com/roberttwomey/on-display-code/files/10097122/xarm7_ikfast_results.zip) linked below. 
 - to compile into an executable: `make ikfast`
 

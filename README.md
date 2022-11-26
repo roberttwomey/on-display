@@ -68,3 +68,10 @@ ROS noetic / pybullet https://github.com/ros-pybullet/ros_pybullet_interface
 - xArm7-CPP_SDK: https://github.com/xArm-Developer/xArm-CPLUS-SDK
   - builds fine on mac M1. run examples from `/Users/rtwomey/code/xArm-CPLUS-SDK/`. 
   - shared libraries is in `/Users/rtwomey/code/xArm-CPLUS-SDK/build/lib/libxarm.so`
+  
+### IK Fast
+- http://docs.ros.org/en/kinetic/api/framefab_irb6600_support/html/doc/ikfast_tutorial.html
+- UR IK Fast python https://github.com/cambel/ur_ikfast
+- https://www.oreilly.com/library/view/mastering-ros-for/9781783551798/ch11s12.html
+
+

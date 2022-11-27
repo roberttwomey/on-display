@@ -37,6 +37,7 @@ PyObject *inverse(PyObject *self, PyObject *args)
   PyObject *argRotation;
   IkReal rotation[9];
   IkReal translation[3];
+  IkReal freeval = 0.05f;//PyFloat_AsDouble(0.0);
 
   // Parse arguments
   if (!PyArg_ParseTuple(args, "OO", &argTranslation, &argRotation))
@@ -61,7 +62,8 @@ PyObject *inverse(PyObject *self, PyObject *args)
 
   // Compute inverse kinematics
   IkSolutionList<IkReal> solutions;
-  ComputeIk(translation, rotation, NULL, solutions);
+  // ComputeIk(translation, rotation, NULL, solutions);
+  ComputeIk(translation, rotation, &freeval, solutions);
 
 
   // Return the solution

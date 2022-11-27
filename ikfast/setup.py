@@ -9,7 +9,7 @@ def main():
         description='ikfast wrapper',
         author='Cyberbotics',
         author_email='support@cyberbotics.com',
-        ext_modules=[Extension('pyikfast', ['ikfast_robot.cpp', 'pyikfast.cpp'])],
+        ext_modules=[Extension('pyikfast', ['ikfast.cpp', 'pyikfast.cpp'])],
         setup_requires=['wheel']
     )
 

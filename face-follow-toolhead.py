@@ -33,7 +33,7 @@ DRAW = 2
 frontAngle = [0, 2.5, 0, 37.3, 0, -57.3, 0]
 downAngle = [0, 1.8, 0, 100, 0.1, 96.7, 0] # v2
 
-closeSizeCutoff = 275.0
+closeSizeCutoff = 150 #275.0
 
 showDebug = True
 

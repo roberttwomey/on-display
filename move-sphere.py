@@ -230,18 +230,18 @@ print(newx, newy, newz)
 
 # radius *= 0.5 # min
 # radius *= 1.5 # max though locks on overhead
+elevation -= 10
 
 # pan in y plane
-for j in range(3):
-    # location of toolhead
-    elevation += math.radians(20)
+for j in range(5):
     
     # pitch of toolhead
     pitch = (starting_pitch+math.degrees(elevation))
 
+
     # pan in x plane
-    for i in range(2):
-        rotation += math.radians(20)
+    for i in range(4):
+        rotation += math.radians(10)
 
         newx = radius*math.cos(rotation)
         newy = radius*math.sin(rotation)
@@ -252,8 +252,24 @@ for j in range(3):
         arm.set_position(newx, newy, newz, roll, pitch, yaw, speed=200, mvacc=2000, wait=False, radius=0)#, speed=500, relative=False, wait=False)
 
 
+    for i in range(8):
+        rotation += math.radians(-10)
+
+        newx = radius*math.cos(rotation)
+        newy = radius*math.sin(rotation)
+        newz = radius*math.sin(elevation)+z_offset
+        yaw = (180+math.degrees(rotation))
+        if yaw < -180:
+            yaw += 360
+        if yaw > 180: 
+            yaw -=360
+
+        print(newx, newy, newz, roll, pitch, yaw)
+
+        arm.set_position(newx, newy, newz, roll, pitch, yaw, speed=200, mvacc=2000, wait=False, radius=0)#, speed=500, relative=False, wait=False)
+
     for i in range(4):
-        rotation += math.radians(-20)
+        rotation += math.radians(10)
 
         newx = radius*math.cos(rotation)
         newy = radius*math.sin(rotation)
@@ -268,22 +284,8 @@ for j in range(3):
 
         arm.set_position(newx, newy, newz, roll, pitch, yaw, speed=200, mvacc=2000, wait=False, radius=0)#, speed=500, relative=False, wait=False)
 
-    for i in range(2):
-        rotation += math.radians(20)
-
-        newx = radius*math.cos(rotation)
-        newy = radius*math.sin(rotation)
-        newz = radius*math.sin(elevation)+z_offset
-        yaw = (180+math.degrees(rotation))
-        if yaw < -180:
-            yaw += 360
-        if yaw > 180: 
-            yaw -=360
-
-        print(newx, newy, newz, roll, pitch, yaw)
-
-        arm.set_position(newx, newy, newz, roll, pitch, yaw, speed=200, mvacc=2000, wait=False, radius=0)#, speed=500, relative=False, wait=False)
-
+    # location of toolhead
+    elevation += math.radians(10)
 
 arm.set_position(*starting_position, speed=200, mvacc=2000, wait=False, radius=0)
 

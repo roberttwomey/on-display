@@ -2,9 +2,11 @@
 
 #include <Python.h>
 #include <vector>
+#include <iostream>
 #include "ikfast.h"
 
 using namespace ikfast;
+using namespace std;
 
 static PyObject *inverse(PyObject *self, PyObject *args);
 static PyObject *forward(PyObject *self, PyObject *args);
@@ -41,24 +43,35 @@ PyObject *inverse(PyObject *self, PyObject *args)
   {
     return NULL;
   }
+
+  std::cout << "translations: ";
   for (int i = 0; i < 3; i++)
   {
     translation[i] = PyFloat_AsDouble(PyList_GetItem(argTranslation, i));
+    std::cout << translation[i] << " ";
   }
+  std::cout << "\n rotations: ";
   for (int i = 0; i < 9; i++)
   {
     rotation[i] = PyFloat_AsDouble(PyList_GetItem(argRotation, i));
+    std::cout << rotation[i] << " ";
   }
+
+  std::cout << std::endl;
 
   // Compute inverse kinematics
   IkSolutionList<IkReal> solutions;
   ComputeIk(translation, rotation, NULL, solutions);
 
+
   // Return the solution
   PyObject *pySolutionCollection = PyList_New((int)solutions.GetNumSolutions());
   std::vector<IkReal> solvalues(GetNumJoints());
+  std::cout << "number of solutions: " << solutions.GetNumSolutions() << endl;
+
   for (int i = 0; i < solutions.GetNumSolutions(); i++)
   {
+
     const IkSolutionBase<IkReal> &sol = solutions.GetSolution(i);
     std::vector<IkReal> vsolfree(sol.GetFree().size());
     sol.GetSolution(&solvalues[0], vsolfree.size() > 0 ? &vsolfree[0] : NULL);

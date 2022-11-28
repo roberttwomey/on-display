@@ -45,20 +45,20 @@ PyObject *inverse(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  std::cout << "translations: ";
+  // std::cout << "translations: ";
   for (int i = 0; i < 3; i++)
   {
     translation[i] = PyFloat_AsDouble(PyList_GetItem(argTranslation, i));
-    std::cout << translation[i] << " ";
+    // std::cout << translation[i] << " ";
   }
-  std::cout << "\n rotations: ";
+  // std::cout << "\n rotations: ";
   for (int i = 0; i < 9; i++)
   {
     rotation[i] = PyFloat_AsDouble(PyList_GetItem(argRotation, i));
-    std::cout << rotation[i] << " ";
+    // std::cout << rotation[i] << " ";
   }
 
-  std::cout << std::endl;
+  // std::cout << std::endl;
 
   // Compute inverse kinematics
   IkSolutionList<IkReal> solutions;
@@ -69,7 +69,7 @@ PyObject *inverse(PyObject *self, PyObject *args)
   // Return the solution
   PyObject *pySolutionCollection = PyList_New((int)solutions.GetNumSolutions());
   std::vector<IkReal> solvalues(GetNumJoints());
-  std::cout << "number of solutions: " << solutions.GetNumSolutions() << endl;
+  // std::cout << "number of solutions: " << solutions.GetNumSolutions() << endl;
 
   for (int i = 0; i < solutions.GetNumSolutions(); i++)
   {

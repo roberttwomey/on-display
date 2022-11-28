@@ -19,6 +19,10 @@ import random
 import traceback
 import threading
 
+# IKFast for xarm 7
+import pyikfast
+import numpy as np
+
 """
 # xArm-Python-SDK: https://github.com/xArm-Developer/xArm-Python-SDK
 # git clone git@github.com:xArm-Developer/xArm-Python-SDK.git
@@ -54,8 +58,10 @@ arm.set_state(0)
 time.sleep(1)
 
 variables = {}
-params = {'speed': 100, 'acc': 2000, 'angle_speed': 20, 'angle_acc': 500, 'events': {}, 'variables': variables, 'callback_in_thread': True, 'quit': False}
+params = {'speed': 50, 'acc': 2000, 'angle_speed': 20, 'angle_acc': 500, 'events': {}, 'variables': variables, 'callback_in_thread': True, 'quit': False}
 
+params['angle_acc'] = 50
+params['angle_speed'] = 1000
 
 # Register error/warn changed callback
 def error_warn_change_callback(data):
@@ -94,9 +100,8 @@ arm.register_connect_changed_callback(connect_changed_callback)
 
 # Rotation
 if not params['quit']:
-    params['angle_acc'] = 1145
-if not params['quit']:
-    params['angle_speed'] = 80
+    # params['angle_acc'] = 1145
+    # params['angle_speed'] = 80
     # if params['quit']:
     
     if arm.error_code == 0 and not params['quit']:
@@ -110,6 +115,47 @@ if not params['quit']:
 
 # look forward but retracted
 # code = arm.set_servo_angle(angle=frontBackAngle, peed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
+
+# print(arm.get_position(), arm.get_position(is_radian=True))
+
+# angles = list(np.radians(frontForwardAngle))
+angles = list(np.radians(frontBackAngle))
+print("start (joints): ", angles)
+translate, rotate  = pyikfast.forward(angles)
+print("start pos (translate, rotate): ", translate, rotate, "\n")
+
+# translate = [0.22392566722298532, 0.0, 0.3999220958855171]#
+# rotate = [2.220446049250313e-16, 0.0, 1.0, 0.0, -1.0, 0.0, 1.0, 0.0, -2.220446049250313e-16] 
+translate = [0.400, 0.0, 0.400]
+
+results = pyikfast.inverse(translate, rotate)
+
+for result in results: 
+    theseangles = list(result)
+    print("final angles (IK joints): ", theseangles)
+
+finalangles = list(np.degrees(results[3]))
+
+arm.set_servo_angle(angle=finalangles, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
+
+translate, rotate  = pyikfast.forward(angles)
+print("final FK (translate, rotate): ", translate, rotate, "\n")
+
+
+# frontBackAngle = [0.0,-45.0,0.0,0.0,0.0,-45.0,0.0]
+# angles = np.radians(frontBackAngle)
+
+# print("start (joints): ", angles)
+
+# translate, rotate  = pyikfast.forward(list(angles))
+
+# print("FK (translate, rotate): ", translate, rotate, "\n")
+
+# joints = pyikfast.inverse(translate, rotate)
+
+
+
+
 
 # look down
 # code = arm.set_servo_angle(angle=[0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0], speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)

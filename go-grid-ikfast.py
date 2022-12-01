@@ -35,7 +35,8 @@ variables = {}
 params = {'speed': 50, 'acc': 2000, 'angle_speed': 20, 'angle_acc': 1000, 'events': {}, 'variables': variables, 'callback_in_thread': True, 'quit': False}
 
 
-params['angle_speed'] = 120
+params['angle_speed'] = 170
+# params['angle_speed'] = 180
 params['angle_acc'] = 1145
 
 
@@ -106,6 +107,7 @@ def selectSolution(solutions, currpose):
             continue
         else: 
             validSols.append(pose)
+
         # for j, angle in enumerate(pose):
         #     for offset in addAngle:
         #         testAng = angle + offset
@@ -149,9 +151,9 @@ def selectSolution(solutions, currpose):
     return validSols[best]
 
 # move to start point
-# frontBackAngle = [0.0,-45.0,0.0,0.0,0.0,-45.0,0.0]
-# arm.set_servo_angle(angle=frontBackAngle, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
-# startPose = list(np.radians(frontBackAngle))
+frontBackAngle = [0.0,-45.0,0.0,0.0,0.0,-45.0,0.0]
+arm.set_servo_angle(angle=frontBackAngle, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
+startPose = list(np.radians(frontBackAngle))
 
 # degrees
 startAngles = arm.angles
@@ -164,35 +166,46 @@ print("start pose (radians): \n{}\n".format(startPose))
 # calculate translation and rotation
 translate, rotate  = pyikfast.forward(startPose)
 print("start position FK (translate, rotate): \n{}\n{}\n".format(translate, rotate))
-
 # print("start position (API): {}".format(arm.position))
 # print("matrix form: {}".format(toIK(arm.position)))
 
-translate = [0.4999999999999999, -0.19999999999999923, 0.4499999999999988]
-rotate = [-2.9883071416984956e-15, 2.607012218056005e-16, 0.9999999999999998, 6.938893903907228e-17, -0.9999999999999998, 2.949029909160572e-16, 0.9999999999999998, 3.469446951953614e-17, 3.0531133177191805e-15]
+# for p in range(40, 110, 10):
+p=90
+x = 0.400
 
-# do Inverse Kinematics
-results = pyikfast.inverse(translate, rotate)
+# corners
+for z in np.arange(0.250, 0.651, 0.4):
+    for y in np.arange(-0.300, 0.400, 0.6):
 
-# print possible solutions
-# for result in results: 
-#     theseangles = list(result)
-#     print("-> solution (joints): ", theseangles, " ", pyikfast.forward(theseangles))
+        # move to a different spot
+        # translate = [0.300, 0, 0.400]
+        translate = [x, y, z]
+        # rotate = toIK([0, 90, 180])
+        rotate = toIK([0, p, 180])
 
-newPose = selectSolution(results, startPose)
-# print("new pose IK (radians):\n{}\n".format(newPose))
+        # do Inverse Kinematics
+        results = pyikfast.inverse(translate, rotate)
 
-translate, rotate  = pyikfast.forward(newPose)
-print("new position FK (translate, rotate):\n{}\n{}".format(translate, rotate))
-print("new position: "
-    +",".join([" {0:.2f}".format(el) for el in translate])
-    +",".join([" {0:.2f}".format(el) for el in toRPY(rotate)])
-    +"\n"
-    )
+        # print possible solutions
+        # for result in results: 
+        #     theseangles = list(result)
+        #     print("-> solution (joints): ", theseangles, " ", pyikfast.forward(theseangles))
 
-newPose = list(np.degrees(newPose))
-# move to result
-arm.set_servo_angle(angle=newPose, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
-# arm.set_servo_angle(angle=newPose, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=False, radius=-1.0)
-# print("new pose IK (degrees):\n{}\n".format(newPose))
+        newPose = selectSolution(results, startPose)
+        print("new pose IK (radians):\n{}".format(newPose))
 
+        translate, rotate  = pyikfast.forward(newPose)
+        print("new position FK (translate, rotate):\n{}\n{}".format(translate, rotate))
+        print("new position: "
+            +",".join([" {0:.4f}".format(el) for el in translate])
+            +",".join([" {0:.4f}".format(el) for el in toRPY(rotate)])
+            +"\n"
+            )
+        
+        newPose = list(np.degrees(newPose))
+        # move to result
+        arm.set_servo_angle(angle=newPose, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
+        # arm.set_servo_angle(angle=newPose, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=False, radius=-1.0)
+        # print("new pose IK (degrees):\n{}\n".format(newPose))
+
+arm.set_servo_angle(angle=frontBackAngle, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)

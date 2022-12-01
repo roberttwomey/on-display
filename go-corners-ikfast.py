@@ -36,6 +36,7 @@ params = {'speed': 50, 'acc': 2000, 'angle_speed': 20, 'angle_acc': 1000, 'event
 
 
 params['angle_speed'] = 170
+# params['angle_speed'] = 180
 params['angle_acc'] = 1145
 
 
@@ -174,15 +175,20 @@ print("start position FK (translate, rotate): \n{}\n{}\n".format(translate, rota
 
 # for p in range(40, 110, 10):
 p=90
-x = 0.500
+x = 0.400
 
-# corners
-# for z in np.arange(0.250, 0.600, 0.3):
-#     for y in np.arange(-0.300, 0.400, 0.3):
 
 # grid
-for z in np.arange(0.250, 0.500, 0.05):
-    for y in np.arange(-0.300, 0.400, 0.1):
+# for z in np.arange(0.250, 0.500, 0.05):
+#     for y in np.arange(-0.300, 0.400, 0.1):
+# for z in np.arange(0.300, 0.701, 0.05):
+#for z in np.arange(0.300, 0.701, 0.05):
+#    for y in np.arange(-0.300, 0.301, 0.1):
+
+# corners
+for z in np.arange(0.250, 0.651, 0.4):
+    for y in np.arange(-0.300, 0.400, 0.6):
+
         # move to a different spot
         # translate = [0.300, 0, 0.400]
         translate = [x, y, z]
@@ -198,13 +204,14 @@ for z in np.arange(0.250, 0.500, 0.05):
         #     print("-> solution (joints): ", theseangles, " ", pyikfast.forward(theseangles))
 
         newPose = selectSolution(results, startPose)
-        # print("new pose IK (radians):\n{}\n".format(newPose))
+        print("new pose IK (radians):\n{}".format(newPose))
 
         translate, rotate  = pyikfast.forward(newPose)
-        print("new position FK (translate, rotate):\n{}\n{}\n".format(translate, rotate))
+        print("new position FK (translate, rotate):\n{}\n{}".format(translate, rotate))
         print("new position: "
             +",".join([" {0:.4f}".format(el) for el in translate])
             +",".join([" {0:.4f}".format(el) for el in toRPY(rotate)])
+            +"\n"
             )
         
         newPose = list(np.degrees(newPose))
@@ -213,3 +220,4 @@ for z in np.arange(0.250, 0.500, 0.05):
         # arm.set_servo_angle(angle=newPose, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=False, radius=-1.0)
         # print("new pose IK (degrees):\n{}\n".format(newPose))
 
+arm.set_servo_angle(angle=frontBackAngle, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)

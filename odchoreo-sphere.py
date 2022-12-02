@@ -150,7 +150,7 @@ time.sleep(1)
 variables = {}
 params = {
     'speed': 100, 'acc': 2000, 
-    'angle_speed': 170, #170, 
+    'angle_speed': 70, #170, 
     'angle_acc': 1145, 
     'events': {}, 'variables': variables, 
     'callback_in_thread': True, 'quit': False
@@ -239,7 +239,7 @@ while True:
 
             rotation = random.uniform(-110, 110)
             elevation = random.uniform(-30, 60)
-            extension = random.uniform(-50, 200)
+            extension = random.uniform(-50, 300)
             deltapitch = random.uniform(-90, 90)
 
             radius = start_radius+extension

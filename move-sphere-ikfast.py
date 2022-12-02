@@ -228,7 +228,7 @@ print("rotation and elevation: ", math.degrees(rotation), math.degrees(elevation
 print("rpy: ", [roll, pitch, yaw])
 
 radius = x
-extension = 200.0
+extension = 0.0#200.0
 radius += extension
 
 # newx = radius*math.cos(rotation)

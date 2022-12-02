@@ -2,11 +2,10 @@ import pyikfast
 import numpy as np
 import sys
 import time
-
+import math
 from scipy.spatial.transform import Rotation as R
 
 # -------- cv setup --------
-
 import cv2
 
 showDebug = True
@@ -66,7 +65,7 @@ time.sleep(1)
 variables = {}
 params = {
     'speed': 100, 'acc': 2000, 
-    'angle_speed': 70, #170, 
+    'angle_speed': 170, 
     'angle_acc': 1145, 
     'events': {}, 'variables': variables, 
     'callback_in_thread': True, 'quit': False
@@ -103,12 +102,8 @@ xarmJointLimits = [
 
 
 def toIK(xarmRPY):
-    # r = R.from_euler('xyz', [
-    #     [angles[0], 0, 0],
-    #     [0, angles[1], 0],
-    #     [0, 0, angles[2]]], degrees=True)
-
-    r = R.from_euler('zyx', xarmRPY, degrees=True)
+    # r = R.from_euler('zyx', xarmRPY, degrees=True)
+    r = R.from_euler('xyz', xarmRPY, degrees=True)
 
     return list(r.as_matrix().flatten())
 
@@ -117,7 +112,7 @@ def toRPY(rotMat):
 
     r = R.from_matrix(rotMat3x3)
     
-    return list(r.as_euler('zxy', degrees=True))
+    return list(r.as_euler('zyx', degrees=True))
 
 
 def selectSolution(solutions, currpose):
@@ -184,12 +179,32 @@ print("start position FK (translate, rotate): \n{}\n{}\n".format(translate, rota
 # [223.926, -0.0, 399.922, 0.0, -89.99998127603166, 180.00001984784282]
 
 
-# for p in range(40, 110, 10):
-p=90
-xpos = 0.400
-ypos = 0
-zpos = 0.300
+z_offset = 400.0#400.0
 
+starting_position = arm.position
+
+xpos = 400.0 #arm.position[0]
+ypos = arm.position[1]
+zpos = arm.position[2] - z_offset
+roll = arm.position[3] # degrees
+pitch = arm.position[4] # degrees
+starting_pitch = pitch
+yaw = arm.position[5] # degrees
+
+rotation = math.atan(ypos/xpos) # opposite/adjacent
+elevation = math.atan(zpos/xpos) # opposite/adjacent
+print("rotation and elevation: ", math.degrees(rotation), math.degrees(elevation))
+print("rpy: ", [roll, pitch, yaw])
+
+radius = xpos
+extension = 0.0
+radius += extension
+# elevation += math.radians(20)
+pitch = starting_pitch + math.degrees(elevation)
+
+
+xError=0
+yError=0
 
 # grid
 # for z in np.arange(0.250, 0.500, 0.05):
@@ -202,6 +217,7 @@ while True:
     try:
         try: 
 
+            now = time.time()
 
             # Read the frame
             _, img = cap.read()
@@ -240,43 +256,21 @@ while True:
                     # print(x, maxSize, closeSizeCutoff)
                     # calculate distance of first face from center of image
                     (x, y, w, h) = maxLoc
+
                     xError = (0.5*capWidth-(x+w*0.5))/capWidth
                     yError = (0.5*capHeight-(y+h*0.5))/capHeight
-                    
+
+                    # show face                    
+                    cv2.rectangle(img, (x, y), (x+w, y+h), (255, 255, 0), 10)
+
                     # show error
                     cv2.line(img, (int(capWidth/2), int(capHeight/2)), (int(x+w/2), int(capHeight/2)), (0, 0, 255), 1)
                     cv2.line(img, (int(capWidth/2), int(capHeight/2)), (int(capWidth/2), int(y+h/2)), (0, 0, 255), 1)
 
-                    scale = 7.0
-                    dTilt = -1.0*scale*offsetY
-                    dPan = scale*offsetX
-                    
-                    # tiltAng += offsetY * 0.05
-                    # panAng += offsetX * 0.042 
-
-                    # add front back moves
-                    #print(dTilt, dPan)
-                    #print('* position:', arm.position)
-                    cv2.rectangle(img, (x, y), (x+w, y+h), (255, 255, 0), 10)
 
                     if time.time() - tLastUpdated > updateInterval:
-                        # arm.set_position(pitch=dTilt, roll=dPan, relative=True, speed=500, mvacc=2000, wait=False)
-                        # ret = arm.set_position_aa(axis_angle_pose=[0, 0, 0, 0, dTilt, dPan], speed=500, relative=True, wait=False)
                         
                         tLastUpdated = time.time()
-
-                    # rotate joint J1
-
-                    # destAngle = arm.angles
-                    # weight=2.5
-                    # print(dPan)
-                    # destAngle[0] += weight*dPan #[(1.0-weight)*currAngle[i]+weight*frontAngle[i] for i in range(len(frontAngle))]
-                    # arm.set_servo_angle(angle=destAngle, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=False, radius=-1.0)
-
-                    # arm.set_tool_position(pitch=dTilt, wait=False)
-                    # move j1
-                    # code = arm.set_servo_angle(servo_id=1, angle=dPan, relative=True, is_radian=False, wait=True)
-                    # print(code)
 
                     timeLastSeen = time.time()
                     tLastUpdate = time.time()
@@ -311,32 +305,28 @@ while True:
 
                             tLastUpdated = time.time()
 
-
-                    # if timeElapsed > 5.0 and timeElapsed 
-                    # elif timeElapsed > 5.0 and timeElapsed < 10.0:
-                    #     cv2.putText(img,"looking down", (10, 70), 
-                    #         font, 
-                    #         fontScale,
-                    #         fontColor,
-                    #         thickness,
-                    #         lineType)
-
-                    #     currAngle = arm.angles
-                    #     weight=0.5
-                    #     destAngle = [(1.0-weight)*currAngle[i]+weight*downAngle[i] for i in range(len(downAngle))]
-                    #     arm.set_servo_angle(angle=destAngle, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=False, radius=-1.0)
-                    # elif timeElapsed > 10.0:
-                    #     # reset the clock
-                    #     timeLastSeen = time.time()
-
-
             # ======== MOVEMENT ========
 
-            # move to a different spot
-            # translate = [0.300, 0, 0.400]
-            translate = [xpos, ypos, zpos]
-            # rotate = toIK([0, 90, 180])
-            rotMat = toIK([0, p, 180])
+            print("target rotation and elevation: ", math.degrees(rotation), math.degrees(elevation))
+            newx = radius*math.cos(rotation)
+            newy = radius*math.sin(rotation)
+            newz = radius*math.sin(elevation)+z_offset
+            # yaw = ((180+math.degrees(rotation))%180)-180
+
+            camFOV = math.radians(103) # razer kiyo pro is 103 degrees FOV wide angle
+            radPerPix = camFOV/capWidth
+            
+            rotation += xError*math.radians(103)
+            elevation += yError*math.radians(103)*0.5625
+
+            yaw = math.degrees(rotation)-180
+            pitch = starting_pitch+math.degrees(elevation)
+
+            print("current position (xArm): {}".format(arm.position))
+            print("target position: {}".format([newx, newy, newz, roll, pitch, yaw]))
+
+            translate = [coord / 1000.0 for coord in [newx, newy, newz]]
+            rotMat = toIK([roll, pitch, yaw])
 
             # do Inverse Kinematics
             results = pyikfast.inverse(translate, rotMat)
@@ -348,15 +338,17 @@ while True:
                 newPose = list(np.degrees(newPose))
 
                 # move to result
-                # arm.set_servo_angle(angle=newPose, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
+                arm.set_servo_angle(angle=newPose, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=10.0)
+
 
                 # time.sleep(3)
             else:
-                print("found an unachievable position: ", [x, y, z, 0, p, 180])
+                print("found an unachievable position: ", [newx, newy, newz, roll, pitch, yaw])
 
             # Display video
             cv2.imshow('img', img)
 
+            print("elapsed= ", time.time()-now)
 
             # Stop if escape key is pressed
             k = cv2.waitKey(30) & 0xff

@@ -18,6 +18,7 @@ mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 
 showDebug = True
+bFacePause = True
 closeSizeCutoff = 100 #275.0
 maxCutoff = 400
 
@@ -232,6 +233,7 @@ elevation = math.degrees(math.atan(z/x)) # opposite/adjacent
 
 start_radius = x
 
+bLevelled = False
 timeLastMoved = time.time()-10
 moveCadence = 10.0
 faceScore = 0
@@ -325,24 +327,6 @@ with mp_face_detection.FaceDetection(
                         if faceScore > 10:
                             faceScore = 10
 
-                # Relax position back to trajectory
-                # else: 
-
-  
-
-                    # if timeElapsed > 5.0 and timeElapsed < 5.0:
-                        
-                    #     # print("relaxing to front")
-                    #     cv2.putText(img,"RELAXING", (10, 110), 
-                    #         font, 
-                    #         fontScale,
-                    #         fontColor,
-                    #         thickness,
-                    #         lineType)
-
-                    #     currPose = list(np.radians(arm.angles))
-
-
                 timeElapsed = time.time() - timeLastMoved
                 cv2.putText(img,"{:.2f} {}".format(timeElapsed, faceScore), (100, 100), 
                     font, 
@@ -360,13 +344,71 @@ with mp_face_detection.FaceDetection(
 
                 # are we currently paying attention to a face or not
                 if faceScore > 5:
-                    
-                    arm.set_state(3) # pause
+
+                    if arm.get_state() == 0:
+                        print("==== FACE MOTION ====")
+                        arm.set_state(3) # pause
 
                     # ======== RESET AND TRACK FACE ========
-                    # arm.set_state(4) # clear motion buffer
-                    # arm.set_state(0) # go
+                    
+                    # if not bLevelled:
 
+                    #     print("trying to roll to 0 (horizontal)")
+                    #     currpos = arm.position
+                    #     x=currpos[0]
+                    #     y=currpos[1]
+                    #     z=currpos[2]-z_offset
+                    #     roll = currpos[3] # degrees
+                    #     pitch = currpos[4] # degrees
+                    #     starting_pitch = currpos[4]
+                    #     yaw = currpos[5] # degrees
+
+                    #     rotation = math.degrees(math.atan(y/x)) # opposite/adjacent
+                    #     elevation = math.degrees(math.atan(z/x)) # opposite/adjacent
+                    #     radius = math.sqrt(x*x+y*y+z*z)
+
+                    #     newx = radius*math.cos(math.radians(rotation))
+                    #     newy = radius*math.sin(math.radians(rotation))
+                    #     newz = radius*math.sin(math.radians(elevation))+z_offset
+
+                    #     yaw = rotation-180
+                    #     if yaw < -180:
+                    #         yaw += 360
+                    #     elif yaw > 180: 
+                    #         yaw -= 360
+
+                    #     pitch = starting_pitch+elevation
+                    #     roll = 0
+
+                    #     translate = [coord / 1000.0 for coord in [newx, newy, newz]]
+                    #     rotMat = toIK([roll, pitch, yaw])
+
+                    #     # do Inverse Kinematics
+                    #     results = pyikfast.inverse(translate, rotMat)
+                    #     currPose = list(np.radians(arm.angles))
+                    #     newPose = selectSolution(results, currPose)
+
+                    #     if newPose is not None:
+                    #         # print("new pose IK (radians):\n{}".format(newPose))
+                    #         # print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*arm.position))
+                    #         print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*currpos))
+                    #         print("target position: [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(newx, newy, newz, roll, pitch, yaw))
+
+                    #         newPose = list(np.degrees(newPose))
+                            
+                    #         arm.set_state(4) # clear motion buffer
+                    #         arm.set_state(0) # go
+
+                    #         # move to result
+                    #         arm.set_servo_angle(angle=newPose, speed=facespeed, mvacc=params['angle_acc'], wait=True, radius=10.0)
+
+                    #         bLevelled = True
+                    #         # time.sleep(3)
+                    #     else:
+                    #         print("found an unachievable position: ", [newx, newy, newz, roll, pitch, yaw])
+                    #         continue
+
+                    # ======== Move to Face ========
                     # print("moving to face (d-x,y): ", xError, yError)
 
                     # currpos = arm.position
@@ -401,8 +443,8 @@ with mp_face_detection.FaceDetection(
                     # newy = radius*math.sin(math.radians(rotation))
                     # newz = radius*math.sin(math.radians(elevation))+z_offset
 
-                    # yaw = math.degrees(rotation)-180
-                    # pitch = starting_pitch+math.degrees(elevation)
+                    # yaw = rotation-180
+                    # pitch = starting_pitch+elevation
 
                     # print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*arm.position))
                     # print("target position: [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(newx, newy, newz, roll, pitch, yaw))
@@ -428,12 +470,13 @@ with mp_face_detection.FaceDetection(
                     #     continue
 
                 else:
+                    bLevelled = False
 
                     if arm.get_state != 0:
                         arm.set_state(0)
 
                     if time.time() - timeLastMoved > moveCadence and faceScore < 5: 
-                        
+                        print("==== SWEEP MOTION ====")
                         print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*arm.position))
 
                         # rotation = random.uniform(-110, 110)
@@ -493,14 +536,31 @@ with mp_face_detection.FaceDetection(
                 arm.set_state(state=3) # pause
                 print("paused")
                 key = input("Press enter to continue, q to quit:")
-                # if key == q:
-                arm.set_state(state=0)
-                continue
-        
+                if key == "q":
+                    print("exiting...")
+                    arm.set_state(state=4) # stop. clears moves
+                    arm.set_state(state=0) # sport. get going home
+                    break
+                elif key == "c":
+                    # continuing
+                    arm.set_state(state=0)
+                elif key == "f":
+                    bFacePause = not bFacePause
+                    print("pause for face: {}".format(str(bFacePause)))
+                elif key == "h":
+                    arm.set_state(state=4) # stop. clears moves
+                    arm.set_state(state=0) # sport. get going home
+                    print("goint to start position at home speed")
+                    arm.set_servo_angle(angle=startAngle, speed=homespeed, mvacc=params['angle_acc'], wait=True, radius=-1.0)
+                    startPose = list(np.radians(startAngle))
+                    print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*arm.position))
+                else: 
+                    arm.set_state(state=0)
+                    continue
         except (KeyboardInterrupt):
+            print("exiting...")
             arm.set_state(state=4) # stop. clears moves
             arm.set_state(state=0) # sport. get going home
-            print("exiting...")
             break
 
 print("Done...")

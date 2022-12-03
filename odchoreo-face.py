@@ -197,7 +197,8 @@ arm.register_connect_changed_callback(connect_changed_callback)
 startAngle = frontForwardAngle
 # startAngle = stretchout
 
-arm.set_servo_angle(angle=startAngle, speed=homespeed, mvacc=params['angle_acc'], wait=True, radius=-1.0)
+# arm.set_servo_angle(angle=startAngle, speed=homespeed, mvacc=params['angle_acc'], wait=True, radius=-1.0)
+arm.set_servo_angle(angle=startAngle, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
 startPose = list(np.radians(startAngle))
 print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*arm.position))
 
@@ -235,7 +236,7 @@ start_radius = x
 
 bLevelled = False
 timeLastMoved = time.time()-10
-moveCadence = 10.0
+moveCadence = 30.0#10.0
 faceScore = 0
 
 def constrain(val, min_val, max_val):
@@ -344,10 +345,10 @@ with mp_face_detection.FaceDetection(
 
                 # are we currently paying attention to a face or not
                 if faceScore > 5:
-
-                    if arm.get_state() == 0:
-                        print("==== FACE MOTION ====")
+                    if arm.get_is_moving():
+                        print("==== FACE PAUSE ====")
                         arm.set_state(3) # pause
+                        
 
                     # ======== RESET AND TRACK FACE ========
                     
@@ -480,7 +481,7 @@ with mp_face_detection.FaceDetection(
                         print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*arm.position))
 
                         # rotation = random.uniform(-110, 110)
-                        rotation = random.uniform(-145, -145)
+                        rotation = random.uniform(-145, 145)
                         elevation = random.uniform(-30, 60)
                         extension = random.uniform(-50, 300)
                         deltapitch = random.uniform(-90, 90)
@@ -551,7 +552,7 @@ with mp_face_detection.FaceDetection(
                     arm.set_state(state=4) # stop. clears moves
                     arm.set_state(state=0) # sport. get going home
                     print("goint to start position at home speed")
-                    arm.set_servo_angle(angle=startAngle, speed=homespeed, mvacc=params['angle_acc'], wait=True, radius=-1.0)
+                    arm.set_servo_angle(angle=startAngle, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
                     startPose = list(np.radians(startAngle))
                     print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*arm.position))
                 else: 
@@ -566,7 +567,8 @@ with mp_face_detection.FaceDetection(
 print("Done...")
 
 
-arm.set_servo_angle(angle=frontForwardAngle, speed=homespeed, mvacc=params['angle_acc'], wait=True, radius=-1.0)
+arm.set_servo_angle(angle=frontForwardAngle, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
+# arm.set_servo_angle(angle=frontForwardAngle, speed=homespeed, mvacc=params['angle_acc'], wait=True, radius=-1.0)
 # arm.set_servo_angle(angle=stretchout, speed=slowspeed, mvacc=params['angle_acc'], wait=True, radius=-1.0)
 
 # release all event

@@ -22,7 +22,7 @@ closeSizeCutoff = 100 #275.0
 maxCutoff = 400
 
 # To capture video from webcam. 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 capWidth = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 capHeight = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
@@ -153,7 +153,7 @@ params = {
     }
 
 homespeed = 80
-
+facespeed = 120
 
 # Register error/warn changed callback
 def error_warn_change_callback(data):
@@ -358,59 +358,127 @@ with mp_face_detection.FaceDetection(
                 if arm.get_is_moving():
                     timeLastMoved = time.time()
 
+                # are we currently paying attention to a face or not
                 if faceScore > 5:
-                    arm.set_state(3)
+                    
+                    arm.set_state(3) # pause
+
+                    # ======== RESET AND TRACK FACE ========
+                    # arm.set_state(4) # clear motion buffer
+                    # arm.set_state(0) # go
+
+                    # print("moving to face (d-x,y): ", xError, yError)
+
+                    # currpos = arm.position
+                    # x=currpos[0]
+                    # y=currpos[1]
+                    # z=currpos[2]-z_offset
+                    # roll = currpos[3] # degrees
+                    # pitch = currpos[4] # degrees
+                    # starting_pitch = currpos[4]
+                    # yaw = currpos[5] # degrees
+
+                    # rotation = math.degrees(math.atan(y/x)) # opposite/adjacent
+                    # elevation = math.degrees(math.atan(z/x)) # opposite/adjacent
+                    # radius = math.sqrt(x*x+y*y+z*z)
+
+                    # # camFOV = math.radians(103) # razer kiyo pro is 103 degrees FOV wide angle
+                    # # radPerPix = camFOV/capWidth
+                    
+                    # frac = 0.5
+                    # # deltaRot = xError*math.radians(103)*frac
+                    # # deltaElev = yError*math.radians(103)*0.5625*frac
+                    # deltaRot = xError*103*frac
+                    # deltaElev = yError*103*0.5625*frac
+                    
+                    # print("radius: {:0.4f}".format(radius))
+                    # print("delta (rot, elev - degrees): {:0.4f}, {:0.4f}".format(deltaRot, deltaElev))
+                    
+                    # rotation+=deltaRot
+                    # elevation+=deltaElev
+
+                    # newx = radius*math.cos(math.radians(rotation))
+                    # newy = radius*math.sin(math.radians(rotation))
+                    # newz = radius*math.sin(math.radians(elevation))+z_offset
+
+                    # yaw = math.degrees(rotation)-180
+                    # pitch = starting_pitch+math.degrees(elevation)
+
+                    # print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*arm.position))
+                    # print("target position: [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(newx, newy, newz, roll, pitch, yaw))
+
+                    # translate = [coord / 1000.0 for coord in [newx, newy, newz]]
+                    # rotMat = toIK([roll, pitch, yaw])
+
+                    # # do Inverse Kinematics
+                    # results = pyikfast.inverse(translate, rotMat)
+                    # currPose = list(np.radians(arm.angles))
+                    # newPose = selectSolution(results, currPose)
+
+                    # if newPose is not None:
+                    #     # print("new pose IK (radians):\n{}".format(newPose))
+                    #     newPose = list(np.degrees(newPose))
+
+                    #     # move to result
+                    #     arm.set_servo_angle(angle=newPose, speed=facespeed, mvacc=params['angle_acc'], wait=True, radius=10.0)
+
+                    #     # time.sleep(3)
+                    # else:
+                    #     print("found an unachievable position: ", [newx, newy, newz, roll, pitch, yaw])
+                    #     continue
+
                 else:
+
                     if arm.get_state != 0:
                         arm.set_state(0)
 
-                if time.time() - timeLastMoved > moveCadence and faceScore < 5: 
-                    
-                    print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*arm.position))
+                    if time.time() - timeLastMoved > moveCadence and faceScore < 5: 
+                        
+                        print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*arm.position))
 
-                    # rotation = random.uniform(-110, 110)
-                    rotation = random.uniform(-145, -145)
-                    elevation = random.uniform(-30, 60)
-                    extension = random.uniform(-50, 300)
-                    deltapitch = random.uniform(-90, 90)
+                        # rotation = random.uniform(-110, 110)
+                        rotation = random.uniform(-145, -145)
+                        elevation = random.uniform(-30, 60)
+                        extension = random.uniform(-50, 300)
+                        deltapitch = random.uniform(-90, 90)
 
-                    radius = start_radius+extension
-                    pitch = starting_pitch+elevation+deltapitch
-                    # pitch = constrain(pitch, -45, 45)
+                        radius = start_radius+extension
+                        pitch = starting_pitch+elevation+deltapitch
+                        # pitch = constrain(pitch, -45, 45)
 
-                    # calc target position move on surface of sphere
-                    newx = radius*math.cos(math.radians(rotation))
-                    newy = radius*math.sin(math.radians(rotation))
-                    newz = radius*math.sin(math.radians(elevation))+z_offset
-                    
-                    roll = 0
-                    yaw = rotation - 180
-                    if yaw < -180:
-                        yaw += 360
-                    elif yaw > 180:
-                        yaw -= 360
+                        # calc target position move on surface of sphere
+                        newx = radius*math.cos(math.radians(rotation))
+                        newy = radius*math.sin(math.radians(rotation))
+                        newz = radius*math.sin(math.radians(elevation))+z_offset
+                        
+                        roll = 0
+                        yaw = rotation - 180
+                        if yaw < -180:
+                            yaw += 360
+                        elif yaw > 180:
+                            yaw -= 360
 
-                    rotMat = toIK([roll, pitch, yaw])
+                        rotMat = toIK([roll, pitch, yaw])
 
-                    # print("target rotation, elevation, radius: {:0.4f}, {:0.4f}, {:0.4f}".format(rotation, elevation, radius))
-                    print("target: [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(newx, newy, newz, roll, pitch, yaw))
+                        # print("target rotation, elevation, radius: {:0.4f}, {:0.4f}, {:0.4f}".format(rotation, elevation, radius))
+                        print("target: [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(newx, newy, newz, roll, pitch, yaw))
 
-                    translate = [coord / 1000.0 for coord in [newx, newy, newz]]
-                    results = pyikfast.inverse(translate, rotMat)
-                    currPose = list(np.radians(arm.angles))
-                    newPose = selectSolution(results, currPose)
+                        translate = [coord / 1000.0 for coord in [newx, newy, newz]]
+                        results = pyikfast.inverse(translate, rotMat)
+                        currPose = list(np.radians(arm.angles))
+                        newPose = selectSolution(results, currPose)
 
-                    if newPose is not None:
-                        # print("new pose IK (radians):\n{}".format(newPose))
-                        newPose = list(np.degrees(newPose))
+                        if newPose is not None:
+                            # print("new pose IK (radians):\n{}".format(newPose))
+                            newPose = list(np.degrees(newPose))
 
-                        # move to result
-                        arm.set_servo_angle(angle=newPose, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=False, radius=-1.0)
+                            # move to result
+                            arm.set_servo_angle(angle=newPose, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=False, radius=-1.0)
 
-                        # time.sleep(3)
-                        timeLastMoved = time.time()
-                    else:
-                        print(" -- xxx -- unachievable")
+                            # time.sleep(3)
+                            timeLastMoved = time.time()
+                        else:
+                            print(" -- xxx -- unachievable")
 
 
                 # Display video
@@ -424,7 +492,8 @@ with mp_face_detection.FaceDetection(
             except (KeyboardInterrupt):
                 arm.set_state(state=3) # pause
                 print("paused")
-                input("Press enter to continue, Ctrl-C to quit")
+                key = input("Press enter to continue, q to quit:")
+                # if key == q:
                 arm.set_state(state=0)
                 continue
         

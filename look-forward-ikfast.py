@@ -114,32 +114,30 @@ if not params['quit']:
 
 
 # look forward but retracted
-# code = arm.set_servo_angle(angle=frontBackAngle, peed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
+code = arm.set_servo_angle(angle=frontBackAngle, peed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
 
 # print(arm.get_position(), arm.get_position(is_radian=True))
 
 # angles = list(np.radians(frontForwardAngle))
-angles = list(np.radians(frontBackAngle))
-print("start (joints): ", angles)
-translate, rotate  = pyikfast.forward(angles)
-print("start pos (translate, rotate): ", translate, rotate, "\n")
+# angles = list(np.radians(frontBackAngle))
+# print("start (joints): ", angles)
+# translate, rotate  = pyikfast.forward(angles)
+# print("start pos (translate, rotate): ", translate, rotate, "\n")
 
-# translate = [0.22392566722298532, 0.0, 0.3999220958855171]#
-# rotate = [2.220446049250313e-16, 0.0, 1.0, 0.0, -1.0, 0.0, 1.0, 0.0, -2.220446049250313e-16] 
-translate = [0.400, 0.0, 0.400]
+# translate = [0.400, 0.0, 0.400]
 
-results = pyikfast.inverse(translate, rotate)
+# results = pyikfast.inverse(translate, rotate)
 
-for result in results: 
-    theseangles = list(result)
-    print("final angles (IK joints): ", theseangles)
+# for result in results: 
+#     theseangles = list(result)
+#     print("final angles (IK joints): ", theseangles)
 
-finalangles = list(np.degrees(results[3]))
+# finalangles = list(np.degrees(results[3]))
 
-arm.set_servo_angle(angle=finalangles, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
+# arm.set_servo_angle(angle=finalangles, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
 
-translate, rotate  = pyikfast.forward(angles)
-print("final FK (translate, rotate): ", translate, rotate, "\n")
+# translate, rotate  = pyikfast.forward(angles)
+# print("final FK (translate, rotate): ", translate, rotate, "\n")
 
 
 # frontBackAngle = [0.0,-45.0,0.0,0.0,0.0,-45.0,0.0]

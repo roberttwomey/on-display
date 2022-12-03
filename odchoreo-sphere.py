@@ -199,7 +199,8 @@ arm.register_connect_changed_callback(connect_changed_callback)
 # frontBackAngle = [0.0,-45.0,0.0,0.0,0.0,-45.0,0.0]
 # arm.set_servo_angle(angle=frontBackAngle, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
 # startPose = list(np.radians(frontBackAngle))
-arm.set_servo_angle(angle=stretchout, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
+# arm.set_servo_angle(angle=stretchout, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
+arm.set_servo_angle(angle=stretchout, speed=80, mvacc=params['angle_acc'], wait=True, radius=-1.0)
 startPose = list(np.radians(stretchout))
 
 startAngles = arm.angles

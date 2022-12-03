@@ -13,7 +13,7 @@ closeSizeCutoff = 150 #275.0
 maxCutoff = 300
 
 # To capture video from webcam. 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 capWidth = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 capHeight = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
@@ -339,7 +339,6 @@ while True:
 
                 # move to result
                 arm.set_servo_angle(angle=newPose, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=10.0)
-
 
                 # time.sleep(3)
             else:

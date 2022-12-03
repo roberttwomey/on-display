@@ -1,16 +1,4 @@
 #!/usr/bin/env python3
-# Software License Agreement (BSD License)
-#
-# Copyright (c) 2022, UFACTORY, Inc.
-# All rights reserved.
-#
-# Author: Vinman <vinman.wen@ufactory.cc> <vinman.cub@gmail.com>
-
-"""
-# Notice
-#   1. Changes to this file on Studio will not be preserved
-#   2. The next conversion will overwrite the file with the same name
-"""
 import sys
 import math
 import time
@@ -20,6 +8,36 @@ import traceback
 import threading
 import numpy as np
 
+
+# -------- cv setup --------
+import cv2
+
+showDebug = True
+closeSizeCutoff = 100 #275.0
+maxCutoff = 400
+
+# To capture video from webcam. 
+cap = cv2.VideoCapture(0)
+
+capWidth = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+capHeight = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+
+# Load the cascade
+face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+
+# load text
+font                   = cv2.FONT_HERSHEY_SIMPLEX
+bottomLeftCornerOfText = (10,500)
+fontScale              = 1
+fontColor              = (255,255,255)
+thickness              = 1
+lineType               = 2
+
+tiltAng = 0
+panAng = 5
+timeLastSeen = time.time()
+updateInterval = 0.1
+tLastUpdated = time.time()
 
 # ---- IK fast stuff
 import pyikfast
@@ -74,31 +92,6 @@ def selectSolution(solutions, currpose):
         else: 
             validSols.append(pose)
 
-        # for j, angle in enumerate(pose):
-        #     for offset in addAngle:
-        #         testAng = angle + offset
-        #         if abs(testAng - currpose[j]) < abs(testSol[j] - currpose[j]) and abs(testAng) <= TWO_PI:
-        #             testSol[j] = testAng
-
-        # testValid = True
-        
-        # for angle in testSol:
-        #     if testSol == 9999:
-        #         testValid = False
-
-        # if testValid:
-            # validSols.append(testSol)
-
-    # from URIKFast.cpp: 
-    #
-    # vector<double> sumsValid;
-    # sumsValid.assign(valid_sols.size(), 0);
-    # for(int i = 0; i < valid_sols.size(); i++){
-    #     for(int j = 0; j < valid_sols[i].size(); j++){
-    #         sumsValid[i] = pow(weight[j]*(valid_sols[i][j] - currentQ[j]), 2);
-    #     }
-    # }
-
     # print("{} valid solutions.".format(len(validSols)))
 
     # Does not help
@@ -135,6 +128,7 @@ def pprint(*args, **kwargs):
         print(*args, **kwargs)
 
 frontForwardAngle = [0, 2.5, 0, 37.3, 0, -57.3, 0]
+frontBackAngle = [0.0,-45.0,0.0,0.0,0.0,-45.0,0.0]
 stretchout = [-350.0, 0, 0, 180, -350, 45, 45]
 
 pprint('xArm-Python-SDK Version:{}'.format(version.__version__))
@@ -199,8 +193,10 @@ arm.register_connect_changed_callback(connect_changed_callback)
 # frontBackAngle = [0.0,-45.0,0.0,0.0,0.0,-45.0,0.0]
 # arm.set_servo_angle(angle=frontBackAngle, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
 # startPose = list(np.radians(frontBackAngle))
-arm.set_servo_angle(angle=stretchout, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
+
+arm.set_servo_angle(angle=stretchout, speed=80, mvacc=params['angle_acc'], wait=True, radius=-1.0)
 startPose = list(np.radians(stretchout))
+print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*arm.position))
 
 startAngles = arm.angles
 # convert to radians
@@ -211,8 +207,8 @@ startPose = list(np.radians(startAngles))
 
 # calculate translation and rotation
 translate, rotate  = pyikfast.forward(startPose)
-print("start position FK (translate, rotate): \n{}\n{}".format(translate, rotate))
-print("start position (API): {}".format(arm.position))
+# print("start position FK (translate, rotate): \n{}\n{}".format(translate, rotate))
+# print("start position (API): {}".format(arm.position))
 # print("matrix form: {}".format(toIK(arm.position[3:6])))
 
 z_offset = 400.0#400.0
@@ -229,55 +225,133 @@ yaw = arm.position[5] # degrees
 
 rotation = math.degrees(math.atan(y/x)) # opposite/adjacent
 elevation = math.degrees(math.atan(z/x)) # opposite/adjacent
-print("rotation and elevation: ", rotation, elevation)
-print("rpy: ", [roll, pitch, yaw])
+# print("rotation and elevation: ", rotation, elevation)
+# print("rpy: ", [roll, pitch, yaw])
 
 start_radius = x
+
+timeLastMoved = time.time()-10
+moveCadence = 10.0
+faceScore = 0
+
+def constrain(val, min_val, max_val):
+    return min(max_val, max(min_val, val))
 
 while True:
     try:
         try: 
-            print("current position (xArm): {}".format(arm.position))
 
-            rotation = random.uniform(-110, 110)
-            elevation = random.uniform(-30, 60)
-            extension = random.uniform(-50, 300)
-            deltapitch = random.uniform(-90, 90)
 
-            radius = start_radius+extension
-            pitch = starting_pitch+elevation+deltapitch
+            now = time.time()
 
-            # calc target position move on surface of sphere
-            newx = radius*math.cos(math.radians(rotation))
-            newy = radius*math.sin(math.radians(rotation))
-            newz = radius*math.sin(math.radians(elevation))+z_offset
+            # Read the frame
+            _, img = cap.read()
             
-            yaw = rotation - 180
-            if yaw < -180:
-                yaw += 360
-            elif yaw > 180:
-                yaw -= 360
+            if img is not None:
+                # Convert to grayscale
+                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                # Detect the faces
+                faces = face_cascade.detectMultiScale(gray, 1.1, 4, minSize=(150,150), maxSize=(600, 600))
+                # Draw the rectangle around each face
+                
+                facecount = 0
+                maxSize = 0
+                maxIndex = -1
+                maxLoc = None
 
-            rotMat = toIK([roll, pitch, yaw])
+                for (x, y, w, h) in faces:
 
-            print("target rotation, elevation, radius: ", rotation, elevation, radius)
-            print("target position: {}".format([newx, newy, newz, roll, pitch, yaw]))
+                    if showDebug:
+                        cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
+                        cv2.putText(img,"{} x {}".format(w,h), (x,y), 
+                            font, 
+                            fontScale,
+                            fontColor,
+                            thickness,
+                            lineType)
+                    
+                    # check how close the face is            
+                    if w > maxSize and w < maxCutoff: 
+                        maxSize = w
+                        maxIndex = facecount
+                        maxLoc = (x, y, w, h)
+                        facecount += 1
+                
+                if facecount > 0:
+                    faceScore += 1
 
-            translate = [coord / 1000.0 for coord in [newx, newy, newz]]
-            results = pyikfast.inverse(translate, rotMat)
-            currPose = list(np.radians(arm.angles))
-            newPose = selectSolution(results, currPose)
+            timeElapsed = time.time() - timeLastMoved
+            cv2.putText(img,"{:.2f} {}".format(timeElapsed, faceScore), (100, 100), 
+                            font, 
+                            fontScale,
+                            fontColor,
+                            thickness,
+                            lineType)
 
-            if newPose is not None:
-                # print("new pose IK (radians):\n{}".format(newPose))
-                newPose = list(np.degrees(newPose))
+            faceScore-=1
+            if faceScore < 0:
+                faceScore = 0
 
-                # move to result
-                arm.set_servo_angle(angle=newPose, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
+            if arm.get_is_moving():
+                timeLastMoved = time.time()
 
-                # time.sleep(3)
-            else:
-                print("found an unachievable position: ", [newx, newy, newz, roll, pitch, yaw])
+            elif time.time() - timeLastMoved > moveCadence: 
+            # and faceScore == 0:
+
+                print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*arm.position))
+
+                # rotation = random.uniform(-110, 110)
+                rotation = random.uniform(-145, -145)
+                elevation = random.uniform(-30, 60)
+                extension = random.uniform(-50, 300)
+                deltapitch = random.uniform(-90, 90)
+
+                radius = start_radius+extension
+                pitch = starting_pitch+elevation+deltapitch
+                # pitch = constrain(pitch, -45, 45)
+
+                # calc target position move on surface of sphere
+                newx = radius*math.cos(math.radians(rotation))
+                newy = radius*math.sin(math.radians(rotation))
+                newz = radius*math.sin(math.radians(elevation))+z_offset
+                
+                roll = 0
+                yaw = rotation - 180
+                if yaw < -180:
+                    yaw += 360
+                elif yaw > 180:
+                    yaw -= 360
+
+                rotMat = toIK([roll, pitch, yaw])
+
+                # print("target rotation, elevation, radius: {:0.4f}, {:0.4f}, {:0.4f}".format(rotation, elevation, radius))
+                print("target: [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(newx, newy, newz, roll, pitch, yaw))
+
+                translate = [coord / 1000.0 for coord in [newx, newy, newz]]
+                results = pyikfast.inverse(translate, rotMat)
+                currPose = list(np.radians(arm.angles))
+                newPose = selectSolution(results, currPose)
+
+                if newPose is not None:
+                    # print("new pose IK (radians):\n{}".format(newPose))
+                    newPose = list(np.degrees(newPose))
+
+                    # move to result
+                    arm.set_servo_angle(angle=newPose, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=False, radius=-1.0)
+
+                    # time.sleep(3)
+                    timeLastMoved = time.time()
+                else:
+                    print(" -- xxx -- unachievable")
+
+
+            # Display video
+            cv2.imshow('img', img)
+
+            # Stop if escape key is pressed
+            k = cv2.waitKey(30) & 0xff
+            if k==27:
+                break
 
         except (KeyboardInterrupt):
             arm.set_state(state=3) # pause
@@ -287,14 +361,14 @@ while True:
             continue
     
     except (KeyboardInterrupt):
-        arm.set_state(state=0)
+        # arm.set_state(state=0)
         print("exiting...")
         break
 
 print("Done...")
 
 
-# arm.set_servo_angle(angle=frontBackAngle, speed=slowspeed, mvacc=params['angle_acc'], wait=True, radius=-1.0)
+arm.set_servo_angle(angle=frontForwardAngle, speed=slowspeed, mvacc=params['angle_acc'], wait=True, radius=-1.0)
 # arm.set_servo_angle(angle=stretchout, speed=slowspeed, mvacc=params['angle_acc'], wait=True, radius=-1.0)
 
 # release all event

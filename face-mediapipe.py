@@ -247,13 +247,15 @@ with mp_face_detection.FaceDetection(
                         mp_drawing.draw_detection(img, detection)
                         bbox = detection.location_data.relative_bounding_box
 
-                        # check how close the face is            
-                        if bbox.width > maxSize and bbox.width < maxCutoff and bbox.xmin > 0 and bbox.ymin > 0: 
-                            maxSize = bbox.width*capWidth
+                        thiswidth = bbox.width * capWidth
+                        # check how close the face is 
+
+                        if thiswidth > maxSize and thiswidth < maxCutoff and bbox.xmin > 0.01 and bbox.ymin > 0.01: 
+                            maxSize = thiswidth
                             maxLoc = bbox
                             facecount+=1
                         
-                    print("maxsize, facecount: ", maxSize, facecount)
+                        #print("maxsize, facecount: ", maxSize, facecount)
 
                     if (facecount > 0) and (maxSize > closeSizeCutoff) and (maxSize < maxCutoff):
                         # print(x, maxSize, closeSizeCutoff)
@@ -303,7 +305,7 @@ with mp_face_detection.FaceDetection(
                             lineType)
 
                         currPose = list(np.radians(arm.angles))
-                        
+
 
                 # ======== MOVEMENT ========
 

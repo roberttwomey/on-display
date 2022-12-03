@@ -10,7 +10,12 @@ import numpy as np
 
 
 # -------- cv setup --------
+import mediapipe as mp
 import cv2
+
+# mediapipe functionality
+mp_face_detection = mp.solutions.face_detection
+mp_drawing = mp.solutions.drawing_utils
 
 showDebug = True
 closeSizeCutoff = 100 #275.0
@@ -21,9 +26,6 @@ cap = cv2.VideoCapture(0)
 
 capWidth = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 capHeight = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-
-# Load the cascade
-face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 # load text
 font                   = cv2.FONT_HERSHEY_SIMPLEX
@@ -150,7 +152,7 @@ params = {
     'callback_in_thread': True, 'quit': False
     }
 
-slowspeed = 80
+homespeed = 80
 
 
 # Register error/warn changed callback
@@ -191,11 +193,11 @@ arm.register_connect_changed_callback(connect_changed_callback)
 
 # move to start point
 # frontBackAngle = [0.0,-45.0,0.0,0.0,0.0,-45.0,0.0]
-# arm.set_servo_angle(angle=frontBackAngle, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=True, radius=-1.0)
-# startPose = list(np.radians(frontBackAngle))
+startAngle = frontForwardAngle
+# startAngle = stretchout
 
-arm.set_servo_angle(angle=stretchout, speed=80, mvacc=params['angle_acc'], wait=True, radius=-1.0)
-startPose = list(np.radians(stretchout))
+arm.set_servo_angle(angle=startAngle, speed=homespeed, mvacc=params['angle_acc'], wait=True, radius=-1.0)
+startPose = list(np.radians(startAngle))
 print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*arm.position))
 
 startAngles = arm.angles
@@ -237,138 +239,205 @@ faceScore = 0
 def constrain(val, min_val, max_val):
     return min(max_val, max(min_val, val))
 
-while True:
-    try:
-        try: 
+# model_selection: 
+# 0 type model: detect faces within 2 meters
+# 1 type model: detect faces within 5 meters
+# min_detection_confidence: 0-1.0 0%-100%
 
+with mp_face_detection.FaceDetection(
+    model_selection=0, min_detection_confidence=0.9) as face_detection:  
+    while cap.isOpened():
+        try:
+            try: 
+                now = time.time()
 
-            now = time.time()
+                # Read the frame
+                success, img = cap.read()
+        
+                if not success:
+                    print("Ignoring empty camera frame.")
+                    # If loading a video, use 'break' instead of 'continue'.
+                    continue
 
-            # Read the frame
-            _, img = cap.read()
-            
-            if img is not None:
-                # Convert to grayscale
-                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                # Detect the faces
-                faces = face_cascade.detectMultiScale(gray, 1.1, 4, minSize=(150,150), maxSize=(600, 600))
-                # Draw the rectangle around each face
-                
-                facecount = 0
+                # To improve performance, optionally mark the image as not writeable to
+                # pass by reference.
+                img.flags.writeable = False
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                results = face_detection.process(img)
+
+                # Draw the face detection annotations on the image.
+                img.flags.writeable = True
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
                 maxSize = 0
-                maxIndex = -1
                 maxLoc = None
+                xError = 0
+                yError = 0
+                facecount = 0
 
-                for (x, y, w, h) in faces:
+                if results.detections:
+                    for detection in results.detections:
+                        # print(detection.location_data.relative_bounding_box)
+                        mp_drawing.draw_detection(img, detection)
+                        bbox = detection.location_data.relative_bounding_box
 
-                    if showDebug:
-                        cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
-                        cv2.putText(img,"{} x {}".format(w,h), (x,y), 
-                            font, 
-                            fontScale,
-                            fontColor,
-                            thickness,
-                            lineType)
-                    
-                    # check how close the face is            
-                    if w > maxSize and w < maxCutoff: 
-                        maxSize = w
-                        maxIndex = facecount
-                        maxLoc = (x, y, w, h)
-                        facecount += 1
-                
-                if facecount > 0:
-                    faceScore += 1
+                        thiswidth = bbox.width * capWidth
+                        # check how close the face is 
 
-            timeElapsed = time.time() - timeLastMoved
-            cv2.putText(img,"{:.2f} {}".format(timeElapsed, faceScore), (100, 100), 
-                            font, 
-                            fontScale,
-                            fontColor,
-                            thickness,
-                            lineType)
+                        # if thiswidth > maxSize and thiswidth < maxCutoff and bbox.xmin > 0.01 and bbox.ymin > 0.01: 
+                        if thiswidth > maxSize and bbox.xmin > 0.01 and bbox.ymin > 0.01: 
+                            maxSize = thiswidth
+                            maxLoc = bbox
+                            facecount+=1
 
-            faceScore-=1
-            if faceScore < 0:
-                faceScore = 0
+                    # if (facecount > 0) and (maxSize > closeSizeCutoff) and (maxSize < maxCutoff):
+                    # no thresholds
+                    if facecount > 0:
+                        # Work with largest face on frame
+                        
+                        # print(x, maxSize, closeSizeCutoff)
+                        # calculate distance of largest face from center of image
+                        x = int(maxLoc.xmin*capWidth)
+                        y = int(maxLoc.ymin*capHeight)
+                        w = int(maxLoc.width*capWidth)
+                        h = int(maxLoc.height*capHeight)
 
-            if arm.get_is_moving():
-                timeLastMoved = time.time()
+                        xError = (0.5*capWidth-(x+w*0.5))/capWidth
+                        yError = (0.5*capHeight-(y+h*0.5))/capHeight
 
-            elif time.time() - timeLastMoved > moveCadence: 
-            # and faceScore == 0:
+                        # show face                    
+                        cv2.rectangle(img, (x, y), (x+w, y+h), (255, 255, 0), 10)
 
-                print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*arm.position))
+                        # show error
+                        cv2.line(img, (int(capWidth/2), int(capHeight/2)), (int(x+w/2), int(capHeight/2)), (0, 0, 255), 1)
+                        cv2.line(img, (int(capWidth/2), int(capHeight/2)), (int(capWidth/2), int(y+h/2)), (0, 0, 255), 1)
 
-                # rotation = random.uniform(-110, 110)
-                rotation = random.uniform(-145, -145)
-                elevation = random.uniform(-30, 60)
-                extension = random.uniform(-50, 300)
-                deltapitch = random.uniform(-90, 90)
 
-                radius = start_radius+extension
-                pitch = starting_pitch+elevation+deltapitch
-                # pitch = constrain(pitch, -45, 45)
+                        if time.time() - tLastUpdated > updateInterval:
+                            
+                            tLastUpdated = time.time()
 
-                # calc target position move on surface of sphere
-                newx = radius*math.cos(math.radians(rotation))
-                newy = radius*math.sin(math.radians(rotation))
-                newz = radius*math.sin(math.radians(elevation))+z_offset
-                
-                roll = 0
-                yaw = rotation - 180
-                if yaw < -180:
-                    yaw += 360
-                elif yaw > 180:
-                    yaw -= 360
+                        timeLastSeen = time.time()
+                        tLastUpdate = time.time()
 
-                rotMat = toIK([roll, pitch, yaw])
+                        faceScore+=2
 
-                # print("target rotation, elevation, radius: {:0.4f}, {:0.4f}, {:0.4f}".format(rotation, elevation, radius))
-                print("target: [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(newx, newy, newz, roll, pitch, yaw))
+                        if faceScore > 10:
+                            faceScore = 10
 
-                translate = [coord / 1000.0 for coord in [newx, newy, newz]]
-                results = pyikfast.inverse(translate, rotMat)
-                currPose = list(np.radians(arm.angles))
-                newPose = selectSolution(results, currPose)
+                # Relax position back to trajectory
+                # else: 
 
-                if newPose is not None:
-                    # print("new pose IK (radians):\n{}".format(newPose))
-                    newPose = list(np.degrees(newPose))
+  
 
-                    # move to result
-                    arm.set_servo_angle(angle=newPose, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=False, radius=-1.0)
+                    # if timeElapsed > 5.0 and timeElapsed < 5.0:
+                        
+                    #     # print("relaxing to front")
+                    #     cv2.putText(img,"RELAXING", (10, 110), 
+                    #         font, 
+                    #         fontScale,
+                    #         fontColor,
+                    #         thickness,
+                    #         lineType)
 
-                    # time.sleep(3)
+                    #     currPose = list(np.radians(arm.angles))
+
+
+                timeElapsed = time.time() - timeLastMoved
+                cv2.putText(img,"{:.2f} {}".format(timeElapsed, faceScore), (100, 100), 
+                    font, 
+                    fontScale,
+                    fontColor,
+                    thickness,
+                    lineType)
+
+                faceScore-=1
+                if faceScore < 0:
+                    faceScore = 0
+
+                if arm.get_is_moving():
                     timeLastMoved = time.time()
+
+                if faceScore > 5:
+                    arm.set_state(3)
                 else:
-                    print(" -- xxx -- unachievable")
+                    if arm.get_state != 0:
+                        arm.set_state(0)
+
+                if time.time() - timeLastMoved > moveCadence and faceScore < 5: 
+                    
+                    print("current position (xArm): [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(*arm.position))
+
+                    # rotation = random.uniform(-110, 110)
+                    rotation = random.uniform(-145, -145)
+                    elevation = random.uniform(-30, 60)
+                    extension = random.uniform(-50, 300)
+                    deltapitch = random.uniform(-90, 90)
+
+                    radius = start_radius+extension
+                    pitch = starting_pitch+elevation+deltapitch
+                    # pitch = constrain(pitch, -45, 45)
+
+                    # calc target position move on surface of sphere
+                    newx = radius*math.cos(math.radians(rotation))
+                    newy = radius*math.sin(math.radians(rotation))
+                    newz = radius*math.sin(math.radians(elevation))+z_offset
+                    
+                    roll = 0
+                    yaw = rotation - 180
+                    if yaw < -180:
+                        yaw += 360
+                    elif yaw > 180:
+                        yaw -= 360
+
+                    rotMat = toIK([roll, pitch, yaw])
+
+                    # print("target rotation, elevation, radius: {:0.4f}, {:0.4f}, {:0.4f}".format(rotation, elevation, radius))
+                    print("target: [{:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}]".format(newx, newy, newz, roll, pitch, yaw))
+
+                    translate = [coord / 1000.0 for coord in [newx, newy, newz]]
+                    results = pyikfast.inverse(translate, rotMat)
+                    currPose = list(np.radians(arm.angles))
+                    newPose = selectSolution(results, currPose)
+
+                    if newPose is not None:
+                        # print("new pose IK (radians):\n{}".format(newPose))
+                        newPose = list(np.degrees(newPose))
+
+                        # move to result
+                        arm.set_servo_angle(angle=newPose, speed=params['angle_speed'], mvacc=params['angle_acc'], wait=False, radius=-1.0)
+
+                        # time.sleep(3)
+                        timeLastMoved = time.time()
+                    else:
+                        print(" -- xxx -- unachievable")
 
 
-            # Display video
-            cv2.imshow('img', img)
+                # Display video
+                cv2.imshow('img', img)
 
-            # Stop if escape key is pressed
-            k = cv2.waitKey(30) & 0xff
-            if k==27:
-                break
+                # Stop if escape key is pressed
+                k = cv2.waitKey(30) & 0xff
+                if k==27:
+                    break
 
+            except (KeyboardInterrupt):
+                arm.set_state(state=3) # pause
+                print("paused")
+                input("Press enter to continue, Ctrl-C to quit")
+                arm.set_state(state=0)
+                continue
+        
         except (KeyboardInterrupt):
-            arm.set_state(state=3) # pause
-            print("paused")
-            input("Press enter to continue, Ctrl-C to quit")
-            arm.set_state(state=0)
-            continue
-    
-    except (KeyboardInterrupt):
-        # arm.set_state(state=0)
-        print("exiting...")
-        break
+            arm.set_state(state=4) # stop. clears moves
+            arm.set_state(state=0) # sport. get going home
+            print("exiting...")
+            break
 
 print("Done...")
 
 
-arm.set_servo_angle(angle=frontForwardAngle, speed=slowspeed, mvacc=params['angle_acc'], wait=True, radius=-1.0)
+arm.set_servo_angle(angle=frontForwardAngle, speed=homespeed, mvacc=params['angle_acc'], wait=True, radius=-1.0)
 # arm.set_servo_angle(angle=stretchout, speed=slowspeed, mvacc=params['angle_acc'], wait=True, radius=-1.0)
 
 # release all event
